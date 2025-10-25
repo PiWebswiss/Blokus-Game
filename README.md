@@ -24,7 +24,7 @@ A lightweight, browser-only Blokus-style game. Play locally with up to 4 players
 
 ---
 
-## 🚀 Quick start
+## Quick start
 
    * Choose **Players** (2–4).
    * For each seat, pick **Human** or **CPU** and set a name.
@@ -35,7 +35,7 @@ A lightweight, browser-only Blokus-style game. Play locally with up to 4 players
 
 ---
 
-## 🎮 How to play
+## How to play
 
 ### Goal
 
@@ -74,7 +74,7 @@ Players take turns. The current player is shown next to **Turn**.
 
 ---
 
-## 🧠 CPU levels
+## CPU levels
 
 * **Easy**: random legal move.
 * **Medium**: prefers larger pieces.
@@ -82,7 +82,7 @@ Players take turns. The current player is shown next to **Turn**.
 
 ---
 
-## 📦 Project files
+## Project files
 
 * `index.html`
   Main page and UI layout.
