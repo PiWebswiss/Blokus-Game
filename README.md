@@ -2,6 +2,7 @@
 
 A lightweight, browser-only Blokus-style game. Play locally with up to 4 players, mixing humans and CPUs, directly from a single HTML file.
 
+*Work in progress:** This project is actively developed and may change without notice.
 <!-- ### You can play it here: https://piwebswiss.github.io/blokus/
  -->
 ![alt text](<image/Screenshot 2025-10-25 143510.png>)
