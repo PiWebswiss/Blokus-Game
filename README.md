@@ -1,4 +1,4 @@
-# Blokus (Local, Human vs CPU) — README
+# Blokus-style game locally
 
 A lightweight, browser-only Blokus-style game. Play locally with up to 4 players, mixing humans and CPUs, directly from a single HTML file.
 
