@@ -12,26 +12,38 @@ const COLOR_HEX = {
 };
 const CORNERS = [ [0,0], [BOARD_SIZE-1,BOARD_SIZE-1], [BOARD_SIZE-1,0], [0,BOARD_SIZE-1] ];
 
-// Full Blokus set: 21 free polyominoes (flips/rotations allowed in game)
+// Translation data is provided by i18n.js.
+const i18nBundle = window.BLOKUS_I18N;
+if (!i18nBundle) {
+  throw new Error('i18n.js must be loaded before game.js');
+}
+const {
+  SUPPORTED_LANGS,
+  LANG_STORAGE_KEY,
+  STRINGS: I18N,
+  readStoredLanguage
+} = i18nBundle;
+
+// Full Blokus set: 21 free polyominoes (flips/rotations allowed in game).
 const BASE_PIECES = [
-  // 1 — monomino
+  // 1 - monomino
   [[0,0]],
 
-  // 2 — domino
+  // 2 - domino
   [[0,0],[1,0]],
 
-  // 3 — triominoes (I, L)
+  // 3 - triominoes (I, L)
   [[0,0],[1,0],[2,0]],                 // I3
   [[0,0],[0,1],[1,0]],                 // L3
 
-  // 5 — tetrominoes (I, O, L, T, S)  (Z is mirror of S when flips allowed)
+  // 5 - tetrominoes (I, O, L, T, S). Z is mirror of S when flips are allowed.
   [[0,0],[1,0],[2,0],[3,0]],           // I4
   [[0,0],[1,0],[0,1],[1,1]],           // O4
   [[0,0],[0,1],[0,2],[1,2]],           // L4
   [[0,0],[1,0],[2,0],[1,1]],           // T4
   [[1,0],[2,0],[0,1],[1,1]],           // S4
 
-  // 12 — pentominoes (F, I, L, P, N, T, U, V, W, X, Y, Z)
+  // 12 - pentominoes (F, I, L, P, N, T, U, V, W, X, Y, Z)
   [[0,1],[1,0],[1,1],[1,2],[2,2]],     // F5  
   [[0,0],[1,0],[2,0],[3,0],[4,0]],     // I5
   [[0,0],[0,1],[0,2],[0,3],[1,3]],     // L5
@@ -126,7 +138,27 @@ const state = {
   selectedVariantIdx: 0,
   hovering: null,
   pieceScale: 1.2,
+  lang: readStoredLanguage(),
 };
+
+function t(key, vars = {}){
+  // Resolve a translated string and replace template variables like {name}.
+  const table = I18N[state.lang] || I18N.en;
+  const fallback = I18N.en[key] ?? key;
+  const template = table[key] ?? fallback;
+  return String(template).replace(/\{(\w+)\}/g, (_, token) => String(vars[token] ?? ''));
+}
+
+function defaultSeatType(i){
+  return i === 0 ? 'human' : 'cpu';
+}
+
+function defaultSeatName(i, type = defaultSeatType(i)){
+  if (type === 'cpu') return t('cpuDefault', { n: i + 1 });
+  if (i === 0) return t('you');
+  if (i === 1) return t('friend');
+  return `${t('human')} ${i + 1}`;
+}
 
 /*************************
  * DOM refs
@@ -148,6 +180,85 @@ const btnStart = document.getElementById('btnStart');
 const btnPreset4 = document.getElementById('btnPreset4');
 const cpuLevelSel = document.getElementById('cpuLevel');
 const elHumanHint = document.getElementById('humanHint');
+const btnLang = document.getElementById('btnLang');
+const elLangEn = document.getElementById('langEn');
+const elLangFr = document.getElementById('langFr');
+const elTitleSub = document.getElementById('titleSub');
+const elTitleTagline = document.getElementById('titleTagline');
+const elLabelCpuLevel = document.getElementById('labelCpuLevel');
+const elSetupTitle = document.getElementById('setupTitle');
+const elSetupDesc = document.getElementById('setupDesc');
+const elLabelPlayers = document.getElementById('labelPlayers');
+const elBoardLabel = document.getElementById('boardLabel');
+const elBoardRules = document.getElementById('boardRules');
+const elThinkingText = document.getElementById('thinkingText');
+const elPiecesTitle = document.getElementById('piecesTitle');
+const elPiecesHelp = document.getElementById('piecesHelp');
+const elControlsTitle = document.getElementById('controlsTitle');
+const elControlsHint = document.getElementById('controlsHint');
+
+function updateLanguageToggleVisual(){
+  const isEn = state.lang === 'en';
+  elLangEn.classList.toggle('font-semibold', isEn);
+  elLangEn.classList.toggle('text-slate-900', isEn);
+  elLangEn.classList.toggle('text-slate-400', !isEn);
+  elLangFr.classList.toggle('font-semibold', !isEn);
+  elLangFr.classList.toggle('text-slate-900', !isEn);
+  elLangFr.classList.toggle('text-slate-400', isEn);
+  btnLang.setAttribute('aria-label', t('langToggleAria'));
+  btnLang.title = t('langToggleAria');
+}
+
+function applyStaticTranslations(){
+  // Update labels that do not depend on current game state.
+  document.documentElement.lang = state.lang;
+  document.title = t('pageTitle');
+
+  elTitleSub.textContent = t('titleSub');
+  elTitleTagline.textContent = t('titleTagline');
+  elLabelCpuLevel.textContent = t('cpuLevel');
+  btnNew.textContent = t('newMatch');
+  elSetupTitle.textContent = t('setupTitle');
+  elSetupDesc.textContent = t('setupDesc');
+  elLabelPlayers.textContent = t('players');
+  btnStart.textContent = t('startGame');
+  btnPreset4.textContent = t('preset4');
+  elBoardLabel.textContent = t('board');
+  elBoardRules.textContent = t('rules');
+  elThinkingText.textContent = t('thinking');
+  elPiecesTitle.textContent = t('piecesTitle');
+  elPiecesHelp.innerHTML = t('piecesHelp');
+  elControlsTitle.textContent = t('controlsTitle');
+  elControlsHint.textContent = t('controlsHint');
+  btnRotate.textContent = t('rotateBtn');
+  btnFlip.textContent = t('flipBtn');
+  btnSkip.textContent = t('skipBtn');
+
+  const easyOption = cpuLevelSel.querySelector('option[value="easy"]');
+  const mediumOption = cpuLevelSel.querySelector('option[value="medium"]');
+  const hardOption = cpuLevelSel.querySelector('option[value="hard"]');
+  if (easyOption) easyOption.textContent = t('easy');
+  if (mediumOption) mediumOption.textContent = t('medium');
+  if (hardOption) hardOption.textContent = t('hard');
+
+  updateLanguageToggleVisual();
+}
+
+function setLanguage(lang, { persist = true, rerender = true } = {}){
+  // Main language switch entry point (called by the EN/FR toggle button).
+  if (!SUPPORTED_LANGS.includes(lang)) return;
+  state.lang = lang;
+  if (persist) {
+    try { localStorage.setItem(LANG_STORAGE_KEY, lang); } catch {}
+  }
+  applyStaticTranslations();
+  if (!elLobby.classList.contains('hidden')) renderSeats();
+  if (rerender) renderAll();
+  if (winOverlay) {
+    const okBtn = winOverlay.querySelector('#ovOk');
+    if (okBtn) okBtn.textContent = t('overlayOk');
+  }
+}
 
 /*************************
  * Winner overlay (no innerHTML)
@@ -167,7 +278,7 @@ function showWinnerOverlay(text){
       id: 'ovOk',
       class: 'bg-indigo-600 text-white px-3 py-1.5 rounded shadow hover:bg-indigo-700 text-sm',
       onclick: () => { winOverlay.classList.add('hidden'); endMatch(); }
-    }, 'OK');
+    }, t('overlayOk'));
 
     footer.appendChild(okBtn);
     box.append(title, footer);
@@ -192,14 +303,28 @@ function currentPlayer(){ return hasPlayers() ? state.players[state.turn % state
  * Lobby / Setup
  *************************/
 function renderSeats(){
+  const existingTypes = {};
+  const existingNames = {};
+  document.querySelectorAll('.seatType').forEach((node) => {
+    const seat = Number(node.dataset.seat);
+    if (Number.isInteger(seat)) existingTypes[seat] = node.value;
+  });
+  document.querySelectorAll('.seatName').forEach((node) => {
+    const seat = Number(node.dataset.seat);
+    if (Number.isInteger(seat)) existingNames[seat] = node.value;
+  });
+
   elSeats.replaceChildren();
   const n = parseInt(selCount.value,10);
 
   for (let i = 0; i < n; i++) {
     const card = el('div', { class: 'border rounded-xl p-3 flex flex-col gap-2' });
+    const typeValue = existingTypes[i] || defaultSeatType(i);
+    const hasExistingName = Object.prototype.hasOwnProperty.call(existingNames, i);
+    const nameValue = hasExistingName ? existingNames[i] : defaultSeatName(i, typeValue);
 
     const header = el('div', { class: 'flex items-center justify-between' });
-    const left   = el('div', { class: 'font-semibold' }, `Player ${i+1}`);
+    const left   = el('div', { class: 'font-semibold' }, t('seatPlayer', { n: i + 1 }));
     const right  = el('span', { class: 'inline-flex items-center gap-1 text-xs' });
     const dot    = el('span', { class: 'w-3 h-3 rounded-full' });
     dot.style.backgroundColor = COLOR_HEX[COLORS[i]];
@@ -207,23 +332,23 @@ function renderSeats(){
     right.append(dot, colorName);
     header.append(left, right);
 
-    const typeWrap = el('label', { class: 'text-sm' }, 'Type ');
+    const typeWrap = el('label', { class: 'text-sm' }, `${t('seatType')} `);
     const typeSel  = el('select', {
       class: 'seatType border rounded px-2 py-1 ml-2 text-sm',
       'data-seat': String(i)
     });
     typeSel.append(
-      el('option', { value: 'human' }, 'Human'),
-      el('option', { value: 'cpu' }, 'CPU')
+      el('option', { value: 'human' }, t('human')),
+      el('option', { value: 'cpu' }, t('cpu'))
     );
-    typeSel.value = (i === 0) ? 'human' : 'cpu';
+    typeSel.value = typeValue;
     typeWrap.append(typeSel);
 
-    const nameWrap = el('label', { class: 'text-sm' }, 'Name ');
+    const nameWrap = el('label', { class: 'text-sm' }, `${t('seatName')} `);
     const nameInp  = el('input', {
       class: 'seatName border rounded px-2 py-1 ml-2 text-sm w-40',
       'data-seat': String(i),
-      value: (i===0 ? 'You' : `CPU ${i+1}`)
+      value: nameValue
     });
     nameWrap.append(nameInp);
 
@@ -238,7 +363,11 @@ btnPreset4.addEventListener('click', ()=>{
   renderSeats();
   const types = ["human","human","cpu","cpu"];
   document.querySelectorAll('.seatType').forEach((el,idx)=> el.value = types[idx]||'cpu');
-  document.querySelectorAll('.seatName').forEach((el,idx)=> el.value = idx<2? ['You','Friend'][idx] : `CPU ${idx+1}`);
+  document.querySelectorAll('.seatName').forEach((el,idx)=>{
+    if (idx === 0) el.value = t('you');
+    else if (idx === 1) el.value = t('friend');
+    else el.value = t('cpuDefault', { n: idx + 1 });
+  });
 });
 
 btnStart.addEventListener('click', ()=>{
@@ -265,6 +394,7 @@ btnStart.addEventListener('click', ()=>{
  * Match lifecycle
  *************************/
 function startMatch(){
+  // Start a fresh board but keep the selected lobby configuration.
   state.board = newBoard();
   state.turn = 0;
   state.selectedIndex = 0;
@@ -275,7 +405,27 @@ function startMatch(){
   maybeCPU();
 }
 
-btnNew.addEventListener('click', ()=>{ elLobby.classList.remove('hidden'); renderSeats(); });
+function openLobby(){
+  // Return to lobby without destroying existing seat input values.
+  elThink.classList.add('hidden');
+  elLobby.classList.remove('hidden');
+  renderSeats();
+}
+
+function endMatch(){
+  // Clear current match state after winner confirmation.
+  state.players = [];
+  state.board = newBoard();
+  state.turn = 0;
+  state.selectedIndex = 0;
+  state.selectedVariantIdx = 0;
+  state.hovering = null;
+  openLobby();
+  renderAll();
+}
+
+btnNew.addEventListener('click', openLobby);
+btnLang.addEventListener('click', ()=>{ setLanguage(state.lang === 'en' ? 'fr' : 'en'); });
 
 /*************************
  * Renderers
@@ -311,9 +461,9 @@ function cellHoverOverlay(){
 function renderPieces(){
   elPieces.replaceChildren();
   const p = currentPlayer();
-  if(!p){ elHumanHint.textContent = 'Set up players in the lobby, then press Start Game.'; return; }
-  if(p.type==='cpu'){ elHumanHint.textContent = `${p.name} is CPU – wait for their move.`; return; }
-  elHumanHint.textContent = 'Click a piece, then click the board. Wheel=rotate, Right-click=flip.';
+  if(!p){ elHumanHint.textContent = t('humanHintSetup'); return; }
+  if(p.type==='cpu'){ elHumanHint.textContent = t('humanHintCpu', { name: p.name }); return; }
+  elHumanHint.textContent = t('humanHintHuman');
 
   const arr = p.pieces.map((piece, idx)=>({ piece, idx, size: piece.length }))
                       .sort((a,b)=> b.size - a.size);
@@ -325,7 +475,7 @@ function renderPieces(){
       class: `relative border rounded-xl p-2 transition-all ${idx===state.selectedIndex? 'ring-2 ring-indigo-500 shadow' : 'hover:bg-slate-50'} ${canMove? '' : 'opacity-40 cursor-not-allowed'}`,
       onclick: ()=>{ if(!canMove) return; state.selectedIndex = idx; state.selectedVariantIdx=0; renderPieces(); }
     });
-    btn.setAttribute('aria-label', `Piece with ${size} cells`);
+    btn.setAttribute('aria-label', t('pieceAria', { count: size }));
 
     const minx=Math.min(...piece.map(pt=>pt[0])), miny=Math.min(...piece.map(pt=>pt[1]));
     const maxx=Math.max(...piece.map(pt=>pt[0])), maxy=Math.max(...piece.map(pt=>pt[1]));
@@ -351,11 +501,11 @@ function renderPieces(){
 function renderStatus(){
   const p=currentPlayer();
   if(!p){
-    elTurn.textContent = 'Turn: – (set up players and press Start Game)';
+    elTurn.textContent = t('turnIdle');
     elScores.replaceChildren();
     return;
   }
-  elTurn.textContent = `Turn: ${p.name} (${p.type.toUpperCase()})`;
+  elTurn.textContent = t('turn', { name: p.name, type: t(p.type) });
 
   const frag = document.createDocumentFragment();
   state.players.forEach((pl, i) => {
@@ -490,13 +640,14 @@ function announceWinner(){
   let text;
   if(winners.length===1){
     const w = winners[0];
-    if(you && w.i===you.id) text = `Good! You win 🎉 with ${w.s} points.`;
-    else text = `You lose 😅 — ${w.name} wins with ${w.s} points.`;
+    if(you && w.i===you.id) text = t('winnerWin', { points: w.s });
+    else text = t('winnerLose', { name: w.name, points: w.s });
   } else {
     const names = winners.map(w=>w.name).join(', ');
     const youAmong = you && winners.some(w=>w.i===you.id);
-    text = youAmong ? `Good! It's a tie at ${max} points between ${names}.`
-                    : `Tie at ${max} points between ${names}.`;
+    text = youAmong
+      ? t('winnerTieYou', { points: max, names })
+      : t('winnerTie', { points: max, names });
   }
   showWinnerOverlay(text);
 }
@@ -577,7 +728,7 @@ function cpuPlay(p){
 })();
 
 /*************************
- * Helpers – per-piece move check
+ * Helpers - per-piece move check
  *************************/
 function hasMoveForPiece(player, piece){
   const variants = transformVariants(piece);
@@ -592,4 +743,9 @@ function hasMoveForPiece(player, piece){
 /*************************
  * Boot
  *************************/
-(function init(){ renderSeats(); renderAll(); })();
+(function init(){
+  // Initial render: build lobby cards, apply saved language, then draw UI.
+  renderSeats();
+  applyStaticTranslations();
+  renderAll();
+})();
