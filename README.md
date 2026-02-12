@@ -35,10 +35,16 @@ cd Blokus-Game
 ### Docker (recommended)
 
 ```bash
-docker compose up --build
+docker compose up -d
 ```
 
 Open `http://localhost:8080`.
+
+To stop the container:
+
+```bash
+docker compose down
+```
 
 ### Without Docker
 
@@ -113,6 +119,33 @@ Players take turns. The current player is shown next to **Turn**.
 
 - `output.css`  
   Tailwind build CSS.
+
+---
+
+## Notes
+
+- This project keeps both files on purpose: `Dockerfile` defines how the app image is built.
+- `docker-compose.yml` defines how the container is run (ports, name, restart policy).
+
+- If you prefer using only `Dockerfile` (no Compose), you can run manually:
+
+```bash
+docker build -t blokus-game .
+docker run -d --name blokus-game -p 8080:80 blokus-game
+```
+
+- Stop/remove that manual container with:
+
+```bash
+docker stop blokus-game
+docker rm blokus-game
+```
+
+- Rebuild the Docker image only when needed (for example after changing `Dockerfile` or static files):
+
+```bash
+docker compose up -d --build
+```
 
 ---
 
