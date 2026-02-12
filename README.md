@@ -1,4 +1,4 @@
-# Blokus-style game locally
+# Blokus Game
 
 A lightweight, browser-only Blokus-style game. Play locally with up to 4 players, mixing humans and CPUs, directly from a single HTML file.
 
@@ -6,7 +6,7 @@ A lightweight, browser-only Blokus-style game. Play locally with up to 4 players
 
 <!-- ### You can play it here: https://piwebswiss.github.io/blokus/ -->
 
-![alt text](image/Screenshot%202025-10-25%20143510.png)
+![Blokus Game Screenshot](image/game.png)
 
 ---
 
@@ -16,6 +16,8 @@ A lightweight, browser-only Blokus-style game. Play locally with up to 4 players
 - Mix **Human** and **CPU** seats.
 - **CPU difficulty**: Easy / Medium / Hard.
 - **Full 21-piece set per player** (standard Blokus).
+- **Dark mode** toggle available in-game 🌙.
+    ![Blokus Game - Dark Mode](image/dark.png)
 - **Mouse & keyboard controls**:
   - Rotate piece: **R** or **mouse wheel** (trackpad scroll).
   - Flip piece: **F** or **right-click**.
