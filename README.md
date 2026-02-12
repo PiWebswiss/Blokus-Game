@@ -108,8 +108,8 @@ Players take turns. The current player is shown next to **Turn**.
 - `index.html`  
   Main page and UI layout.
 
-- `game.js`  
-  Game logic, rules, CPU, rendering, and input handling.
+- `src/js/app.js`  
+  Single JavaScript entrypoint: translations, game logic, CPU, rendering, and input handling.
 
 - `output.css`  
   Tailwind build CSS.

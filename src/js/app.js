@@ -1,3 +1,129 @@
+// Blokus single-file app bundle (i18n + game logic).
+// This file is the only JavaScript entrypoint used by index.html.
+
+// Centralized UI text for all supported languages.
+// This bootstrap exposes translation data for the game section below.
+(function bootstrapI18n(global) {
+  const SUPPORTED_LANGS = ['en', 'fr'];
+  const LANG_STORAGE_KEY = 'blokus_lang';
+
+  // Keep text keys identical across languages so the game logic can switch safely.
+  const STRINGS = {
+    en: {
+      pageTitle: 'Blokus - Local (2-4 players, Human/CPU)',
+      titleSub: '(Local 2-4 players)',
+      titleTagline: 'Choose human/CPU per seat - See when CPU is thinking - Play all on one device',
+      cpuLevel: 'CPU level',
+      darkMode: 'Dark mode',
+      darkModeAria: 'Toggle dark mode',
+      langToggleAria: 'Toggle language (English/French)',
+      newMatch: 'New Match',
+      setupTitle: 'Setup',
+      setupDesc: 'Select how many players and who is human vs CPU.',
+      players: 'Players',
+      startGame: 'Start Game',
+      preset4: '4 players (2 human, 2 CPU)',
+      board: 'Board',
+      rules: 'Rules: First piece must touch your start corner. Same-color pieces may only touch at corners (no edges).',
+      thinking: 'is thinking...',
+      piecesTitle: 'Current Player Pieces',
+      piecesHelp: 'Rotate: <kbd class="px-1 border rounded">R</kbd> or Mouse Wheel - Flip: <kbd class="px-1 border rounded">F</kbd> or Right-Click',
+      humanHintSetup: 'Set up players in the lobby, then press Start Game.',
+      humanHintCpu: '{name} is CPU - wait for their move.',
+      humanHintHuman: 'Click a piece, then click the board. Wheel=rotate, Right-click=flip.',
+      controlsTitle: 'Controls',
+      controlsHint: 'Skip turn if you are stuck.',
+      rotateBtn: 'Rotate (R)',
+      flipBtn: 'Flip (F)',
+      skipBtn: 'Skip Turn',
+      easy: 'Easy',
+      medium: 'Medium',
+      hard: 'Hard',
+      turnIdle: 'Turn: - (set up players and press Start Game)',
+      turn: 'Turn: {name} ({type})',
+      seatPlayer: 'Player {n}',
+      seatType: 'Type',
+      seatName: 'Name',
+      human: 'Human',
+      cpu: 'CPU',
+      you: 'You',
+      friend: 'Friend',
+      cpuDefault: 'CPU {n}',
+      pieceAria: 'Piece with {count} cells',
+      winnerWin: 'Good! You win with {points} points.',
+      winnerLose: 'You lose - {name} wins with {points} points.',
+      winnerTieYou: "Good! It's a tie at {points} points between {names}.",
+      winnerTie: 'Tie at {points} points between {names}.',
+      overlayOk: 'OK',
+    },
+    fr: {
+      pageTitle: 'Blokus - Local (2-4 joueurs, Humain/IA)',
+      titleSub: '(Local 2-4 joueurs)',
+      titleTagline: "Choisissez Humain/IA pour chaque place - Voyez quand l'IA reflechit - Jouez sur un seul appareil",
+      cpuLevel: 'Niveau IA',
+      darkMode: 'Mode sombre',
+      darkModeAria: 'Basculer le mode sombre',
+      langToggleAria: 'Basculer la langue (Anglais/Francais)',
+      newMatch: 'Nouvelle partie',
+      setupTitle: 'Configuration',
+      setupDesc: 'Choisissez le nombre de joueurs et qui est Humain ou IA.',
+      players: 'Joueurs',
+      startGame: 'Lancer la partie',
+      preset4: '4 joueurs (2 humains, 2 IA)',
+      board: 'Plateau',
+      rules: 'Regles : La premiere piece doit toucher votre coin de depart. Les pieces de meme couleur ne peuvent se toucher que par les coins (pas par les cotes).',
+      thinking: 'reflechit...',
+      piecesTitle: 'Pieces du joueur courant',
+      piecesHelp: 'Rotation: <kbd class="px-1 border rounded">R</kbd> ou molette - Miroir: <kbd class="px-1 border rounded">F</kbd> ou clic droit',
+      humanHintSetup: 'Configurez les joueurs dans le lobby puis cliquez sur Lancer la partie.',
+      humanHintCpu: '{name} est une IA - attendez son coup.',
+      humanHintHuman: 'Cliquez une piece puis cliquez le plateau. Molette=rotation, Clic droit=miroir.',
+      controlsTitle: 'Commandes',
+      controlsHint: 'Passez votre tour si vous etes bloque.',
+      rotateBtn: 'Rotation (R)',
+      flipBtn: 'Miroir (F)',
+      skipBtn: 'Passer le tour',
+      easy: 'Facile',
+      medium: 'Moyen',
+      hard: 'Difficile',
+      turnIdle: 'Tour : - (configurez les joueurs puis lancez la partie)',
+      turn: 'Tour : {name} ({type})',
+      seatPlayer: 'Joueur {n}',
+      seatType: 'Type',
+      seatName: 'Nom',
+      human: 'Humain',
+      cpu: 'IA',
+      you: 'Vous',
+      friend: 'Ami',
+      cpuDefault: 'IA {n}',
+      pieceAria: '{count} cases',
+      winnerWin: 'Bravo ! Vous gagnez avec {points} points.',
+      winnerLose: 'Vous perdez - {name} gagne avec {points} points.',
+      winnerTieYou: 'Bravo ! Egalite a {points} points entre {names}.',
+      winnerTie: 'Egalite a {points} points entre {names}.',
+      overlayOk: 'OK',
+    },
+  };
+
+  function readStoredLanguage() {
+    try {
+      const raw = global.localStorage.getItem(LANG_STORAGE_KEY);
+      return SUPPORTED_LANGS.includes(raw) ? raw : 'en';
+    } catch {
+      return 'en';
+    }
+  }
+
+  // The game section reads this object to render all translated UI text.
+  global.BLOKUS_I18N = {
+    SUPPORTED_LANGS,
+    LANG_STORAGE_KEY,
+    STRINGS,
+    readStoredLanguage,
+  };
+})(window);
+
+
 // --- Blokus (DOM-APIs, mouse rotate/flip, scoring & winner overlay, UNIQUE SHAPES GLOBALLY) ---
 
 const BOARD_SIZE = 20;
@@ -12,10 +138,10 @@ const COLOR_HEX = {
 };
 const CORNERS = [ [0,0], [BOARD_SIZE-1,BOARD_SIZE-1], [BOARD_SIZE-1,0], [0,BOARD_SIZE-1] ];
 
-// Translation data is provided by i18n.js.
+// Translation data is provided by the i18n bootstrap section above.
 const i18nBundle = window.BLOKUS_I18N;
 if (!i18nBundle) {
-  throw new Error('i18n.js must be loaded before game.js');
+  throw new Error('i18n bootstrap must run before the game logic section');
 }
 const {
   SUPPORTED_LANGS,
@@ -23,6 +149,20 @@ const {
   STRINGS: I18N,
   readStoredLanguage
 } = i18nBundle;
+const THEME_STORAGE_KEY = 'blokus_theme';
+
+function readStoredTheme(){
+  try {
+    return localStorage.getItem(THEME_STORAGE_KEY) === 'dark' ? 'dark' : 'light';
+  } catch {
+    return 'light';
+  }
+}
+
+function cssVar(name, fallback){
+  const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return value || fallback;
+}
 
 // Full Blokus set: 21 free polyominoes (flips/rotations allowed in game).
 const BASE_PIECES = [
@@ -139,6 +279,7 @@ const state = {
   hovering: null,
   pieceScale: 1.2,
   lang: readStoredLanguage(),
+  theme: readStoredTheme(),
 };
 
 function t(key, vars = {}){
@@ -181,6 +322,8 @@ const btnPreset4 = document.getElementById('btnPreset4');
 const cpuLevelSel = document.getElementById('cpuLevel');
 const elHumanHint = document.getElementById('humanHint');
 const btnLang = document.getElementById('btnLang');
+const btnTheme = document.getElementById('btnTheme');
+const elThemeLabel = document.getElementById('themeLabel');
 const elLangEn = document.getElementById('langEn');
 const elLangFr = document.getElementById('langFr');
 const elTitleSub = document.getElementById('titleSub');
@@ -196,6 +339,12 @@ const elPiecesTitle = document.getElementById('piecesTitle');
 const elPiecesHelp = document.getElementById('piecesHelp');
 const elControlsTitle = document.getElementById('controlsTitle');
 const elControlsHint = document.getElementById('controlsHint');
+
+function applyThemeVisual(){
+  const isDark = state.theme === 'dark';
+  document.documentElement.classList.toggle('dark', isDark);
+  btnTheme.setAttribute('aria-checked', String(isDark));
+}
 
 function updateLanguageToggleVisual(){
   const isEn = state.lang === 'en';
@@ -233,6 +382,9 @@ function applyStaticTranslations(){
   btnRotate.textContent = t('rotateBtn');
   btnFlip.textContent = t('flipBtn');
   btnSkip.textContent = t('skipBtn');
+  elThemeLabel.textContent = t('darkMode');
+  btnTheme.setAttribute('aria-label', t('darkModeAria'));
+  btnTheme.title = t('darkModeAria');
 
   const easyOption = cpuLevelSel.querySelector('option[value="easy"]');
   const mediumOption = cpuLevelSel.querySelector('option[value="medium"]');
@@ -242,6 +394,7 @@ function applyStaticTranslations(){
   if (hardOption) hardOption.textContent = t('hard');
 
   updateLanguageToggleVisual();
+  applyThemeVisual();
 }
 
 function setLanguage(lang, { persist = true, rerender = true } = {}){
@@ -260,6 +413,16 @@ function setLanguage(lang, { persist = true, rerender = true } = {}){
   }
 }
 
+function setTheme(theme, { persist = true, rerender = true } = {}){
+  if (!['light', 'dark'].includes(theme)) return;
+  state.theme = theme;
+  if (persist) {
+    try { localStorage.setItem(THEME_STORAGE_KEY, theme); } catch {}
+  }
+  applyThemeVisual();
+  if (rerender) renderAll();
+}
+
 /*************************
  * Winner overlay (no innerHTML)
  *************************/
@@ -267,11 +430,11 @@ let winOverlay = null;
 function showWinnerOverlay(text){
   if (!winOverlay) {
     winOverlay = el('div', {
-      class: 'absolute inset-0 bg-white/70 backdrop-blur-sm rounded-2xl flex items-center justify-center',
+      class: 'winner-overlay absolute inset-0 bg-white/70 backdrop-blur-sm rounded-2xl flex items-center justify-center',
     });
     winOverlay.style.zIndex = '50';
 
-    const box = el('div', { class: 'bg-white rounded-2xl shadow p-4' });
+    const box = el('div', { class: 'winner-card bg-white rounded-2xl shadow p-4' });
     const title = el('div', { class: 'text-2xl font-semibold mb-2', id: 'ovText' }, text);
     const footer= el('div', { class: 'text-right' });
     const okBtn = el('button', {
@@ -426,6 +589,7 @@ function endMatch(){
 
 btnNew.addEventListener('click', openLobby);
 btnLang.addEventListener('click', ()=>{ setLanguage(state.lang === 'en' ? 'fr' : 'en'); });
+btnTheme.addEventListener('click', ()=>{ setTheme(state.theme === 'dark' ? 'light' : 'dark'); });
 
 /*************************
  * Renderers
@@ -433,11 +597,12 @@ btnLang.addEventListener('click', ()=>{ setLanguage(state.lang === 'en' ? 'fr' :
 function renderBoard(){
   elBoard.replaceChildren();
   elBoard.style.gridTemplateColumns = `repeat(${BOARD_SIZE}, 1.6rem)`;
+  const emptyCellColor = cssVar('--cell-empty', '#ffffff');
   for(let y=0;y<BOARD_SIZE;y++){
     for(let x=0;x<BOARD_SIZE;x++){
       const v = state.board[y][x];
       const cell = el('div', { class: 'cell border border-slate-200 rounded-sm' });
-      cell.style.backgroundColor = (v===-1) ? '#ffffff' : (COLOR_HEX[state.players[v].color] || '#94a3b8');
+      cell.style.backgroundColor = (v===-1) ? emptyCellColor : (COLOR_HEX[state.players[v].color] || '#94a3b8');
       cell.addEventListener('mouseenter', ()=> onHoverCell(x,y));
       cell.addEventListener('mouseleave', ()=> { state.hovering=null; cellHoverOverlay(); });
       cell.addEventListener('click', ()=> onClickCell(x,y));
@@ -447,6 +612,7 @@ function renderBoard(){
 }
 function cellHoverOverlay(){
   const children = Array.from(elBoard.children);
+  const hoverRing = cssVar('--hover-ring', 'rgba(99,102,241,0.7)');
   children.forEach(c=> c.style.boxShadow='');
   if(!state.hovering) return;
   const { x,y,variant } = state.hovering;
@@ -455,7 +621,7 @@ function cellHoverOverlay(){
     if(!inBounds(cx,cy)) continue;
     const idx=cy*BOARD_SIZE+cx;
     const elc=children[idx];
-    if(elc) elc.style.boxShadow='inset 0 0 0 3px rgba(99,102,241,0.7)';
+    if(elc) elc.style.boxShadow=`inset 0 0 0 3px ${hoverRing}`;
   }
 }
 function renderPieces(){
@@ -467,6 +633,7 @@ function renderPieces(){
 
   const arr = p.pieces.map((piece, idx)=>({ piece, idx, size: piece.length }))
                       .sort((a,b)=> b.size - a.size);
+  const pieceEmptyColor = cssVar('--piece-empty', '#f1f5f9');
 
   arr.forEach(({piece, idx, size})=>{
     const canMove = hasMoveForPiece(p, piece);
@@ -490,7 +657,7 @@ function renderPieces(){
     cells.forEach(v=>{
       const c = el('div', { class: 'piece-cell rounded' });
       c.style.width = cellSize; c.style.height = cellSize;
-      c.style.backgroundColor = v ? COLOR_HEX[p.color] : '#f1f5f9';
+      c.style.backgroundColor = v ? COLOR_HEX[p.color] : pieceEmptyColor;
       grid.appendChild(c);
     });
 

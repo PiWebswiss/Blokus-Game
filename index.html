@@ -10,6 +10,108 @@
   <link href="./src/output.css" rel="stylesheet"/>
 
   <style>
+    /* Theme tokens (light/dark). */
+    :root {
+      --bg: #f8fafc;
+      --text: #1e293b;
+      --surface: #ffffff;
+      --muted: #64748b;
+      --border: #cbd5e1;
+      --chip-bg: #f1f5f9;
+      --cell-empty: #ffffff;
+      --piece-empty: #f1f5f9;
+      --overlay: rgba(255, 255, 255, 0.70);
+      --overlay-text: #334155;
+      --hover-ring: rgba(99, 102, 241, 0.70);
+    }
+
+    html.dark {
+      --bg: #0f172a;
+      --text: #e2e8f0;
+      --surface: #1e293b;
+      --muted: #94a3b8;
+      --border: #334155;
+      --chip-bg: #1f2937;
+      --cell-empty: #0b1220;
+      --piece-empty: #334155;
+      --overlay: rgba(15, 23, 42, 0.72);
+      --overlay-text: #e2e8f0;
+      --hover-ring: rgba(129, 140, 248, 0.85);
+    }
+
+    body {
+      background-color: var(--bg) !important;
+      color: var(--text) !important;
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+
+    .ui-surface { background-color: var(--surface) !important; }
+    .text-slate-500 { color: var(--muted) !important; }
+    .dark .text-slate-900 { color: var(--text) !important; }
+    .border, .border-slate-200 { border-color: var(--border) !important; }
+    .bg-slate-100 { background-color: var(--chip-bg) !important; color: var(--text) !important; }
+    .hover\:bg-slate-50:hover { background-color: var(--chip-bg) !important; }
+
+    select, input {
+      background-color: var(--surface);
+      color: var(--text);
+      border-color: var(--border);
+    }
+
+    #btnLang {
+      background-color: var(--surface);
+      color: var(--text);
+      border-color: var(--border);
+    }
+
+    .theme-switch {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.25rem 0.6rem;
+      border: 1px solid var(--border);
+      border-radius: 9999px;
+      background-color: var(--surface);
+      color: var(--text);
+      transition: background-color 0.2s ease, border-color 0.2s ease;
+    }
+
+    .theme-switch-track {
+      width: 2.25rem;
+      height: 1.25rem;
+      border-radius: 9999px;
+      background-color: var(--border);
+      display: inline-flex;
+      align-items: center;
+      transition: background-color 0.2s ease;
+    }
+
+    .theme-switch-thumb {
+      width: 1rem;
+      height: 1rem;
+      border-radius: 9999px;
+      background-color: #ffffff;
+      transform: translateX(0.125rem);
+      transition: transform 0.2s ease, background-color 0.2s ease;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+    }
+
+    .theme-switch[aria-checked="true"] .theme-switch-track {
+      background-color: #4f46e5;
+    }
+
+    .theme-switch[aria-checked="true"] .theme-switch-thumb {
+      transform: translateX(1.125rem);
+    }
+
+    html.dark .theme-switch-thumb {
+      background-color: #e2e8f0;
+    }
+
+    #thinking, .winner-overlay { background-color: var(--overlay) !important; }
+    #thinking .text-slate-700 { color: var(--overlay-text) !important; }
+    .winner-card { background-color: var(--surface) !important; color: var(--text) !important; }
+
     /* Small local overrides for board/piece cell sizing and scrollbar style. */
     * { user-select: none; }
     .cell { width: 1.6rem; height: 1.6rem; }
@@ -20,7 +122,7 @@
 </head>
 <body class="bg-slate-50 text-slate-800">
   <div class="max-w-7xl mx-auto p-4">
-    <!-- Top bar: title + CPU difficulty + language toggle + new game button -->
+    <!-- Top bar: title + CPU difficulty + action buttons -->
     <header class="flex items-center justify-between mb-4">
       <div>
         <h1 class="text-2xl font-bold">Blokus <span id="titleSub" class="text-slate-500 text-base">(Local 2-4 players)</span></h1>
@@ -39,11 +141,17 @@
           <span class="text-slate-400">/</span>
           <span id="langFr" class="text-slate-400">FR</span>
         </button>
+        <button id="btnTheme" type="button" class="theme-switch hover:bg-slate-100" role="switch" aria-label="Toggle dark mode" title="Toggle dark mode" aria-checked="false">
+          <span class="theme-switch-track" aria-hidden="true">
+            <span class="theme-switch-thumb"></span>
+          </span>
+          <span id="themeLabel" class="text-sm">Dark mode</span>
+        </button>
       </div>
     </header>
 
     <!-- Lobby/setup panel shown before a game starts -->
-    <section id="lobby" class="bg-white rounded-2xl shadow p-4 mb-4">
+    <section id="lobby" class="ui-surface bg-white rounded-2xl shadow p-4 mb-4">
       <div class="flex items-center justify-between mb-3">
         <div>
           <h2 id="setupTitle" class="font-semibold">Setup</h2>
@@ -67,7 +175,7 @@
 
     <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
       <!-- Board area -->
-      <section class="lg:col-span-3 bg-white rounded-2xl shadow p-3 relative">
+      <section class="ui-surface lg:col-span-3 bg-white rounded-2xl shadow p-3 relative">
         <div class="flex items-center justify-between mb-2">
           <div class="text-sm"><span id="boardLabel" class="font-semibold">Board</span> 20x20</div>
           <div id="turnBadge" class="text-xs bg-slate-100 rounded px-2 py-1">Turn: -</div>
@@ -86,7 +194,7 @@
 
       <!-- Side panel: piece palette, controls, and scores -->
       <aside class="lg:col-span-2 space-y-4">
-        <div class="bg-white rounded-2xl shadow p-3">
+        <div class="ui-surface bg-white rounded-2xl shadow p-3">
           <div class="flex items-center justify-between mb-2">
             <div id="piecesTitle" class="font-semibold">Current Player Pieces</div>
             <div id="piecesHelp" class="text-xs text-slate-500">Rotate: <kbd class="px-1 border rounded">R</kbd> or Mouse Wheel - Flip: <kbd class="px-1 border rounded">F</kbd> or Right-Click</div>
@@ -95,7 +203,7 @@
           <div id="humanHint" class="mt-2 text-xs text-slate-500">Click a piece, hover the board, then click to place.</div>
         </div>
 
-        <div class="bg-white rounded-2xl shadow p-3">
+        <div class="ui-surface bg-white rounded-2xl shadow p-3">
           <div class="flex items-center justify-between">
             <div>
               <div id="controlsTitle" class="font-semibold">Controls</div>
@@ -113,8 +221,7 @@
     </div>
   </div>
 
-  <!-- Load translated text first, then game logic that consumes it. -->
-  <script defer src="./i18n.js"></script>
-  <script defer src="./game.js"></script>
+  <!-- Single JavaScript entrypoint (translations + game logic). -->
+  <script defer src="./src/js/app.js"></script>
 </body>
 </html>
