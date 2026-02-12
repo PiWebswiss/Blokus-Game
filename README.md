@@ -32,7 +32,17 @@ git clone https://github.com/PiWebswiss/Blokus-Game.git
 cd Blokus-Game
 ```
 
-Then double-click `index.html` to run the game.
+### Docker (recommended)
+
+```bash
+docker compose up --build
+```
+
+Open `http://localhost:8080`.
+
+### Without Docker
+
+Double-click `index.html` to run the game.
 
 
 ---
