@@ -5,7 +5,8 @@
 // This bootstrap exposes translation data for the game section below.
 (function bootstrapI18n(global) {
   const SUPPORTED_LANGS = ['en', 'fr'];
-  const LANG_STORAGE_KEY = 'blokus_lang';
+  const LANG_STORAGE_KEY = 'ui_lang';
+  const LEGACY_LANG_STORAGE_KEYS = ['blokus_lang', 'lang'];
 
   // Keep text keys identical across languages so the game logic can switch safely.
   const STRINGS = {
@@ -107,8 +108,16 @@
 
   function readStoredLanguage() {
     try {
-      const raw = global.localStorage.getItem(LANG_STORAGE_KEY);
-      return SUPPORTED_LANGS.includes(raw) ? raw : 'en';
+      const keys = [LANG_STORAGE_KEY, ...LEGACY_LANG_STORAGE_KEYS];
+      for (const key of keys) {
+        const raw = global.localStorage.getItem(key);
+        if (!SUPPORTED_LANGS.includes(raw)) continue;
+        if (key !== LANG_STORAGE_KEY) {
+          try { global.localStorage.setItem(LANG_STORAGE_KEY, raw); } catch {}
+        }
+        return raw;
+      }
+      return 'en';
     } catch {
       return 'en';
     }

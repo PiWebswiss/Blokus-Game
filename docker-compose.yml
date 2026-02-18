@@ -1,7 +1,0 @@
-services:
-  blokus:
-    build: .
-    container_name: blokus-game
-    ports:
-      - "8080:80"
-    restart: unless-stopped
