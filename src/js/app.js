@@ -5,7 +5,8 @@
 // This bootstrap exposes translation data for the game section below.
 (function bootstrapI18n(global) {
   const SUPPORTED_LANGS = ['en', 'fr'];
-  const LANG_STORAGE_KEY = 'blokus_lang';
+  const LANG_STORAGE_KEY = 'ui_lang';
+  const LEGACY_LANG_STORAGE_KEYS = ['blokus_lang', 'lang'];
 
   // Keep text keys identical across languages so the game logic can switch safely.
   const STRINGS = {
@@ -107,8 +108,16 @@
 
   function readStoredLanguage() {
     try {
-      const raw = global.localStorage.getItem(LANG_STORAGE_KEY);
-      return SUPPORTED_LANGS.includes(raw) ? raw : 'en';
+      const keys = [LANG_STORAGE_KEY, ...LEGACY_LANG_STORAGE_KEYS];
+      for (const key of keys) {
+        const raw = global.localStorage.getItem(key);
+        if (!SUPPORTED_LANGS.includes(raw)) continue;
+        if (key !== LANG_STORAGE_KEY) {
+          try { global.localStorage.setItem(LANG_STORAGE_KEY, raw); } catch {}
+        }
+        return raw;
+      }
+      return 'en';
     } catch {
       return 'en';
     }
@@ -153,9 +162,11 @@ const THEME_STORAGE_KEY = 'blokus_theme';
 
 function readStoredTheme(){
   try {
-    return localStorage.getItem(THEME_STORAGE_KEY) === 'dark' ? 'dark' : 'light';
+    const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+    if (savedTheme === 'light' || savedTheme === 'dark') return savedTheme;
+    return 'dark';
   } catch {
-    return 'light';
+    return 'dark';
   }
 }
 
@@ -188,7 +199,7 @@ const BASE_PIECES = [
   [[0,0],[1,0],[2,0],[3,0],[4,0]],     // I5
   [[0,0],[0,1],[0,2],[0,3],[1,3]],     // L5
   [[0,0],[1,0],[0,1],[1,1],[0,2]],     // P5
-  [[0,0],[1,0],[1,1],[2,1],[2,2]],     // N5
+  [[0,0],[0,1],[1,1],[2,1],[2,2]],     // N5
   [[0,0],[1,0],[2,0],[1,1],[1,2]],     // T5
   [[0,0],[2,0],[0,1],[1,1],[2,1]],     // U5
   [[0,0],[0,1],[0,2],[1,2],[2,2]],     // V5
@@ -299,6 +310,12 @@ function defaultSeatName(i, type = defaultSeatType(i)){
   if (i === 0) return t('you');
   if (i === 1) return t('friend');
   return `${t('human')} ${i + 1}`;
+}
+
+function readSelectedPlayerCount(){
+  const parsed = Number.parseInt(selCount.value, 10);
+  if (!Number.isFinite(parsed)) return 2;
+  return Math.max(2, Math.min(4, parsed));
 }
 
 /*************************
@@ -468,17 +485,18 @@ function currentPlayer(){ return hasPlayers() ? state.players[state.turn % state
 function renderSeats(){
   const existingTypes = {};
   const existingNames = {};
-  document.querySelectorAll('.seatType').forEach((node) => {
+  elSeats.querySelectorAll('.seatType').forEach((node) => {
     const seat = Number(node.dataset.seat);
     if (Number.isInteger(seat)) existingTypes[seat] = node.value;
   });
-  document.querySelectorAll('.seatName').forEach((node) => {
+  elSeats.querySelectorAll('.seatName').forEach((node) => {
     const seat = Number(node.dataset.seat);
     if (Number.isInteger(seat)) existingNames[seat] = node.value;
   });
 
   elSeats.replaceChildren();
-  const n = parseInt(selCount.value,10);
+  const n = readSelectedPlayerCount();
+  if (selCount.value !== String(n)) selCount.value = String(n);
 
   for (let i = 0; i < n; i++) {
     const card = el('div', { class: 'border rounded-xl p-3 flex flex-col gap-2' });
@@ -520,13 +538,14 @@ function renderSeats(){
   }
 }
 selCount.addEventListener('change', renderSeats);
+selCount.addEventListener('input', renderSeats);
 
 btnPreset4.addEventListener('click', ()=>{
   selCount.value = '4';
   renderSeats();
   const types = ["human","human","cpu","cpu"];
-  document.querySelectorAll('.seatType').forEach((el,idx)=> el.value = types[idx]||'cpu');
-  document.querySelectorAll('.seatName').forEach((el,idx)=>{
+  elSeats.querySelectorAll('.seatType').forEach((el,idx)=> el.value = types[idx]||'cpu');
+  elSeats.querySelectorAll('.seatName').forEach((el,idx)=>{
     if (idx === 0) el.value = t('you');
     else if (idx === 1) el.value = t('friend');
     else el.value = t('cpuDefault', { n: idx + 1 });
@@ -534,11 +553,14 @@ btnPreset4.addEventListener('click', ()=>{
 });
 
 btnStart.addEventListener('click', ()=>{
-  const n = parseInt(selCount.value,10);
+  renderSeats();
+  const n = readSelectedPlayerCount();
   state.players = [];
   for(let i=0;i<n;i++){
-    const type = document.querySelector(`.seatType[data-seat="${i}"]`).value;
-    const name = document.querySelector(`.seatName[data-seat="${i}"]`).value || `P${i+1}`;
+    const typeNode = elSeats.querySelector(`.seatType[data-seat="${i}"]`);
+    const type = typeNode ? typeNode.value : defaultSeatType(i);
+    const nameNode = elSeats.querySelector(`.seatName[data-seat="${i}"]`);
+    const name = (nameNode?.value || '').trim() || defaultSeatName(i, type);
     state.players.push({
       id:i,
       name,
