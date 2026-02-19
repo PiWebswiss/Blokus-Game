@@ -290,6 +290,7 @@ const state = {
   selectedIndex: 0,
   selectedVariantIdx: 0,
   hovering: null,
+  cpuThinkTimer: null,
   pieceScale: 1.2,
   lang: readStoredLanguage(),
   theme: readStoredTheme(),
@@ -364,6 +365,14 @@ function syncMainMenuButtonVisibility(){
   if (!btnMainMenu) return;
   const inMatch = elLobby.classList.contains('hidden');
   btnMainMenu.classList.toggle('hidden', !inMatch);
+}
+
+function cancelCpuThinking(){
+  if (state.cpuThinkTimer !== null) {
+    clearTimeout(state.cpuThinkTimer);
+    state.cpuThinkTimer = null;
+  }
+  elThink.classList.add('hidden');
 }
 
 function applyThemeVisual(){
@@ -590,6 +599,7 @@ btnStart.addEventListener('click', ()=>{
  *************************/
 function startMatch(){
   // Start a fresh board but keep the selected lobby configuration.
+  cancelCpuThinking();
   state.board = newBoard();
   state.turn = 0;
   state.selectedIndex = 0;
@@ -603,10 +613,32 @@ function startMatch(){
 
 function openLobby(){
   // Return to lobby without destroying existing seat input values.
-  elThink.classList.add('hidden');
+  cancelCpuThinking();
+  state.hovering = null;
   elLobby.classList.remove('hidden');
   syncMainMenuButtonVisibility();
   renderSeats();
+}
+
+function resetToDefaultSetup(){
+  // Full reset used by "New Match": restore default setup values and players.
+  cancelCpuThinking();
+  state.players = [];
+  state.board = newBoard();
+  state.turn = 0;
+  state.selectedIndex = 0;
+  state.selectedVariantIdx = 0;
+  state.hovering = null;
+
+  selCount.value = '2';
+  cpuLevelSel.value = 'medium';
+  elSeats.replaceChildren();
+
+  elLobby.classList.remove('hidden');
+  syncMainMenuButtonVisibility();
+  renderSeats();
+  renderAll();
+  if (winOverlay) winOverlay.classList.add('hidden');
 }
 
 function endMatch(){
@@ -621,7 +653,8 @@ function endMatch(){
   renderAll();
 }
 
-btnNew.addEventListener('click', openLobby);
+btnNew.addEventListener('click', resetToDefaultSetup);
+btnMainMenu.addEventListener('click', openLobby);
 btnLang.addEventListener('click', ()=>{ setLanguage(state.lang === 'en' ? 'fr' : 'en'); });
 btnTheme.addEventListener('click', ()=>{ setTheme(state.theme === 'dark' ? 'light' : 'dark'); });
 
@@ -884,15 +917,29 @@ function allLegalPlacements(board, player, used){
 }
 
 function maybeCPU(){
+  if (!elLobby.classList.contains('hidden')) return;
   const p=currentPlayer();
   if(!p || p.type!=='cpu') return;
+  cancelCpuThinking();
   elThinkNm.textContent = p.name;
   elThink.classList.remove('hidden');
   const delay = 300 + Math.random()*500;
-  setTimeout(()=> cpuPlay(p), delay);
+  state.cpuThinkTimer = setTimeout(()=>{
+    state.cpuThinkTimer = null;
+    cpuPlay(p);
+  }, delay);
 }
 
 function cpuPlay(p){
+  if (!elLobby.classList.contains('hidden')) {
+    cancelCpuThinking();
+    return;
+  }
+  const active = currentPlayer();
+  if (!active || active.type !== 'cpu' || active.id !== p.id) {
+    cancelCpuThinking();
+    return;
+  }
   const legal = allLegalPlacements(state.board, p, p.used);
   if(legal.length===0){ p.passed=true; elThink.classList.add('hidden'); nextTurn(); return; }
   const level = cpuLevelSel.value;
