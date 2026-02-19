@@ -15,6 +15,7 @@
       titleSub: '(Local 2-4 players)',
       titleTagline: 'Choose human/CPU per seat - See when CPU is thinking - Play all on one device',
       cpuLevel: 'CPU level',
+      mainMenu: 'Main Menu',
       darkMode: 'Dark mode',
       darkModeAria: 'Toggle dark mode',
       langToggleAria: 'Toggle language (English/French)',
@@ -62,6 +63,7 @@
       titleSub: '(Local 2-4 joueurs)',
       titleTagline: "Choisissez Humain/IA pour chaque place - Voyez quand l'IA reflechit - Jouez sur un seul appareil",
       cpuLevel: 'Niveau IA',
+      mainMenu: 'Menu principal',
       darkMode: 'Mode sombre',
       darkModeAria: 'Basculer le mode sombre',
       langToggleAria: 'Basculer la langue (Anglais/Francais)',
@@ -330,6 +332,7 @@ const elThinkNm = document.getElementById('thinkingName');
 const btnRotate = document.getElementById('btnRotate');
 const btnFlip = document.getElementById('btnFlip');
 const btnSkip = document.getElementById('btnSkip');
+const btnMainMenu = document.getElementById('btnMainMenu');
 const btnNew = document.getElementById('btnNew');
 const elLobby = document.getElementById('lobby');
 const elSeats = document.getElementById('seats');
@@ -357,6 +360,12 @@ const elPiecesHelp = document.getElementById('piecesHelp');
 const elControlsTitle = document.getElementById('controlsTitle');
 const elControlsHint = document.getElementById('controlsHint');
 
+function syncMainMenuButtonVisibility(){
+  if (!btnMainMenu) return;
+  const inMatch = elLobby.classList.contains('hidden');
+  btnMainMenu.classList.toggle('hidden', !inMatch);
+}
+
 function applyThemeVisual(){
   const isDark = state.theme === 'dark';
   document.documentElement.classList.toggle('dark', isDark);
@@ -383,6 +392,7 @@ function applyStaticTranslations(){
   elTitleSub.textContent = t('titleSub');
   elTitleTagline.textContent = t('titleTagline');
   elLabelCpuLevel.textContent = t('cpuLevel');
+  btnMainMenu.textContent = t('mainMenu');
   btnNew.textContent = t('newMatch');
   elSetupTitle.textContent = t('setupTitle');
   elSetupDesc.textContent = t('setupDesc');
@@ -586,6 +596,7 @@ function startMatch(){
   state.selectedVariantIdx = 0;
   state.hovering = null;
   elLobby.classList.add('hidden');
+  syncMainMenuButtonVisibility();
   renderAll();
   maybeCPU();
 }
@@ -594,6 +605,7 @@ function openLobby(){
   // Return to lobby without destroying existing seat input values.
   elThink.classList.add('hidden');
   elLobby.classList.remove('hidden');
+  syncMainMenuButtonVisibility();
   renderSeats();
 }
 
@@ -792,13 +804,26 @@ function nextTurn(){
   if(!hasPlayers()) return;
   if(isGameOver()){ announceWinner(); return; }
   const n=state.players.length;
+
   for(let i=1;i<=n;i++){
     const nxt=(state.turn+i)%n;
-    state.turn=nxt;
     const p=state.players[nxt];
-    if(!p.passed){ break; }
+    if(p.passed) continue;
+
+    // Auto-pass players that are blocked so turns never stall on humans.
+    if(!hasAnyMove(p)){
+      p.passed = true;
+      continue;
+    }
+
+    state.turn = nxt;
+    renderAll();
+    maybeCPU();
+    return;
   }
-  renderAll(); maybeCPU();
+
+  if(isGameOver()){ announceWinner(); return; }
+  renderAll();
 }
 
 function isGameOver(){
@@ -935,6 +960,7 @@ function hasMoveForPiece(player, piece){
 (function init(){
   // Initial render: build lobby cards, apply saved language, then draw UI.
   renderSeats();
+  syncMainMenuButtonVisibility();
   applyStaticTranslations();
   renderAll();
 })();

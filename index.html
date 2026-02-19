@@ -9,6 +9,9 @@
   <!-- Compiled Tailwind CSS file used by this static page. -->
   <link href="./src/output.css" rel="stylesheet"/>
 
+ <!-- Single JavaScript entrypoint (translations + game logic). -->
+  <script defer src="./src/js/app.js"></script>
+
   <style>
     /* Theme tokens (light/dark). */
     :root {
@@ -135,13 +138,14 @@
           <option value="medium" selected>Medium</option>
           <option value="hard">Hard</option>
         </select>
+        <a id="btnMainMenu" href="../index.html" class="hidden border px-3 py-1.5 rounded shadow hover:bg-slate-100 text-sm">Main Menu</a>
         <button id="btnNew" class="bg-indigo-600 text-white px-3 py-1.5 rounded shadow hover:bg-indigo-700 text-sm">New Match</button>
         <button id="btnLang" type="button" class="border px-3 py-1.5 rounded text-sm hover:bg-slate-100" aria-label="Toggle language (English/French)" title="Toggle language (English/French)">
           <span id="langEn" class="font-semibold text-slate-900">EN</span>
           <span class="text-slate-400">/</span>
           <span id="langFr" class="text-slate-400">FR</span>
         </button>
-        <button id="btnTheme" type="button" class="theme-switch hover:bg-slate-100" role="switch" aria-label="Toggle dark mode" title="Toggle dark mode" aria-checked="false">
+        <button id="btnTheme" type="button" class="theme-switch hover:bg-slate-100" role="switch" aria-label="Toggle dark mode" title="Toggle dark mode" aria-checked="true">
           <span class="theme-switch-track" aria-hidden="true">
             <span class="theme-switch-thumb"></span>
           </span>
@@ -221,7 +225,6 @@
     </div>
   </div>
 
-  <!-- Single JavaScript entrypoint (translations + game logic). -->
-  <script defer src="./src/js/app.js"></script>
+
 </body>
 </html>
